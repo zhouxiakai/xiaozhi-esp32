@@ -45,6 +45,8 @@ class EspSparkBot : public WifiBoard {
 private:
     i2c_master_bus_handle_t i2c_bus_;
     Button boot_button_;
+    Button onoff_button_;
+    bool ready_shutdown;
     
     void InitializeI2c() {
         // Initialize I2C peripheral
@@ -83,27 +85,30 @@ private:
             app.ToggleChatState();
         });
 
+        onoff_button_.OnLongPress([this](){
+            if(ready_shutdown){
+                //1.如果直接检查长按关机，在开机阶段会触发长按回调，导致直接关机
+                //2.需要等检查到开机按键松开之后，才进入长按检查关机的状态，所以引入ready_shutdown的机制
+                ESP_LOGI(TAG, "Shutdown");
+                gpio_set_level(ONOFF_OUTPUT_GPIO, 0);
+            }
+        });
+
+        onoff_button_.OnPressUp([this](){
+            ready_shutdown = true;
+        });
     }
 
     void InitializeOnOff() {
-        //zero-initialize the config structure.
         gpio_config_t io_conf = {};
-        //disable interrupt
         io_conf.intr_type = GPIO_INTR_DISABLE;
-        //set as output mode
         io_conf.mode = GPIO_MODE_OUTPUT;
-        //bit mask of the pins that you want to set,e.g.GPIO18/19
         io_conf.pin_bit_mask = (1ULL<<ONOFF_OUTPUT_GPIO);
-        //disable pull-down mode
         io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-        //disable pull-up mode
         io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-        //configure GPIO with the given settings
         gpio_config(&io_conf);
-
-        gpio_set_level(ONOFF_OUTPUT_GPIO, 1);
-
-        ESP_LOGI(TAG, "Set ONOFF_OUTPUT_GPIO On");
+        gpio_set_level(ONOFF_OUTPUT_GPIO, 1);   //开机自动拉高ONOFF引脚供电
+        ESP_LOGI(TAG, "Startup");
     }
 
     // 物联网初始化，添加对 AI 可见设备
@@ -115,7 +120,12 @@ private:
     }
 
 public:
-    EspSparkBot() : boot_button_(BOOT_BUTTON_GPIO) {
+    EspSparkBot() : 
+        boot_button_(BOOT_BUTTON_GPIO),
+        onoff_button_(ONOFF_BUTTON_GPIO){
+        
+        ready_shutdown = false;
+        
         InitializeOnOff();
         InitializeI2c();
         InitializeSpi();
