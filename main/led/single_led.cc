@@ -120,43 +120,44 @@ void SingleLed::OnStateChanged() {
     auto& app = Application::GetInstance();
     auto device_state = app.GetDeviceState();
     switch (device_state) {
-        case kDeviceStateStarting:
-            SetColor(0, 0, DEFAULT_BRIGHTNESS);
+        case kDeviceStateStarting:	//开机
+            SetColor(DEFAULT_BRIGHTNESS, 0, 0);
             StartContinuousBlink(100);
             break;
-        case kDeviceStateWifiConfiguring:
-            SetColor(0, 0, DEFAULT_BRIGHTNESS);
-            StartContinuousBlink(500);
+        case kDeviceStateWifiConfiguring:	//配网
+            SetColor(DEFAULT_BRIGHTNESS, 0, 0);
+            StartContinuousBlink(1000);
             break;
-        case kDeviceStateIdle:
+        case kDeviceStateIdle:	//空闲
             TurnOff();
             break;
-        case kDeviceStateConnecting:
-            SetColor(0, 0, DEFAULT_BRIGHTNESS);
-            TurnOn();
+        case kDeviceStateConnecting:	//连接平台
+            SetColor(DEFAULT_BRIGHTNESS, 0, 0);
+            StartContinuousBlink(500);
             break;
-        case kDeviceStateListening:
+        case kDeviceStateListening:	//语音输入
             if (app.IsVoiceDetected()) {
-                SetColor(HIGH_BRIGHTNESS, 0, 0);
+                SetColor(0, 0, HIGH_BRIGHTNESS);
             } else {
-                SetColor(LOW_BRIGHTNESS, 0, 0);
+                SetColor(0, 0, LOW_BRIGHTNESS);
             }
             TurnOn();
             break;
-        case kDeviceStateSpeaking:
+        case kDeviceStateSpeaking:	//讲话
             SetColor(0, DEFAULT_BRIGHTNESS, 0);
             TurnOn();
             break;
-        case kDeviceStateUpgrading:
+        case kDeviceStateUpgrading:	//升级
             SetColor(0, DEFAULT_BRIGHTNESS, 0);
             StartContinuousBlink(100);
             break;
-        case kDeviceStateActivating:
-            SetColor(0, DEFAULT_BRIGHTNESS, 0);
-            StartContinuousBlink(500);
+        case kDeviceStateActivating:	//注册激活
+            SetColor(DEFAULT_BRIGHTNESS, 0, 0);
+            TurnOn();
             break;
         default:
             ESP_LOGW(TAG, "Unknown led strip event: %d", device_state);
             return;
     }
 }
+

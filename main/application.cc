@@ -205,6 +205,52 @@ void Application::ShowActivationCode() {
     }
 }
 
+void Application::ShowWifi(std::string ssid, const char* message) {
+	size_t pos = ssid.find('-');
+    if (pos != std::string::npos) {
+        ssid = ssid.substr(pos + 1);  // 从 '-' 后一个字符开始取到末尾
+    }
+
+    struct digit_sound {
+        char digit;
+        const std::string_view& sound;
+    };
+    static const std::array<digit_sound, 22> digit_sounds{{
+        digit_sound{'0', Lang::Sounds::P3_0},
+        digit_sound{'1', Lang::Sounds::P3_1}, 
+        digit_sound{'2', Lang::Sounds::P3_2},
+        digit_sound{'3', Lang::Sounds::P3_3},
+        digit_sound{'4', Lang::Sounds::P3_4},
+        digit_sound{'5', Lang::Sounds::P3_5},
+        digit_sound{'6', Lang::Sounds::P3_6},
+        digit_sound{'7', Lang::Sounds::P3_7},
+        digit_sound{'8', Lang::Sounds::P3_8},
+        digit_sound{'9', Lang::Sounds::P3_9},
+        digit_sound{'a', Lang::Sounds::P3_A},
+        digit_sound{'b', Lang::Sounds::P3_B},
+        digit_sound{'c', Lang::Sounds::P3_C},
+        digit_sound{'d', Lang::Sounds::P3_D},
+        digit_sound{'e', Lang::Sounds::P3_E},
+        digit_sound{'f', Lang::Sounds::P3_F},
+        digit_sound{'A', Lang::Sounds::P3_A},
+        digit_sound{'B', Lang::Sounds::P3_B},
+        digit_sound{'C', Lang::Sounds::P3_C},
+        digit_sound{'D', Lang::Sounds::P3_D},
+        digit_sound{'E', Lang::Sounds::P3_E},
+        digit_sound{'F', Lang::Sounds::P3_F},
+    }};
+
+    Alert(Lang::Strings::WIFI_CONFIG_MODE,  message , "", Lang::Sounds::P3_WIFICONFIG);
+
+    for (const auto& digit : ssid) {
+        auto it = std::find_if(digit_sounds.begin(), digit_sounds.end(),
+            [digit](const digit_sound& ds) { return ds.digit == digit; });
+        if (it != digit_sounds.end()) {
+            PlaySound(it->sound);
+        }
+    }
+}
+
 void Application::Alert(const char* status, const char* message, const char* emotion, const std::string_view& sound) {
     ESP_LOGW(TAG, "Alert %s: %s [%s]", status, message, emotion);
     auto display = Board::GetInstance().GetDisplay();

@@ -63,6 +63,7 @@ public:
     void Schedule(std::function<void()> callback);
     void SetDeviceState(DeviceState state);
     void Alert(const char* status, const char* message, const char* emotion = "", const std::string_view& sound = "");
+	void ShowWifi(std::string ssid, const char* message);
     void DismissAlert();
     void AbortSpeaking(AbortReason reason);
     void ToggleChatState();
