@@ -54,7 +54,7 @@ void WifiBoard::EnterWifiConfigMode() {
     
     // 播报配置 WiFi 的提示
     //application.Alert(Lang::Strings::WIFI_CONFIG_MODE, hint.c_str(), "", Lang::Sounds::P3_WIFICONFIG);
-	application.ShowWifi(wifi_ap.GetSsid(), hint.c_str());
+	application.StartShowWifi(wifi_ap.GetSsid(), hint);
     
     // Wait forever until reset after configuration
     while (true) {

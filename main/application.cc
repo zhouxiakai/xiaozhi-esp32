@@ -150,7 +150,7 @@ void Application::CheckNewVersion() {
         display->SetStatus(Lang::Strings::ACTIVATION);
         // Activation code is shown to the user and waiting for the user to input
         if (ota_.HasActivationCode()) {
-            ShowActivationCode();
+            StartShowActivationCode();
         }
 
         // This will block the loop until the activation is done or timeout
@@ -170,6 +170,24 @@ void Application::CheckNewVersion() {
             }
         }
     }
+}
+
+void Application::StartShowActivationCode(){
+	esp_timer_create_args_t clock_timer_args = {
+        .callback = [](void* arg) {
+            Application* app = (Application*)arg;
+            app->OnClockShowActiveCodeTimer();
+        },
+        .arg = this,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "clock_show_activation_code_timer",
+        .skip_unhandled_events = true
+    };
+    esp_timer_create(&clock_timer_args, &clock_show_active_code_timer_handle_);
+    esp_timer_start_periodic(clock_show_active_code_timer_handle_, 20 * 1000000);
+	
+	//由于开启定时器后首次出发需要等待1个周期时间，所以第一次播报直接调用接口
+	ShowActivationCode();
 }
 
 void Application::ShowActivationCode() {
@@ -205,12 +223,32 @@ void Application::ShowActivationCode() {
     }
 }
 
-void Application::ShowWifi(std::string ssid, const char* message) {
+void Application::StartShowWifi(std::string ssid, std::string message){
 	size_t pos = ssid.find('-');
     if (pos != std::string::npos) {
         ssid = ssid.substr(pos + 1);  // 从 '-' 后一个字符开始取到末尾
     }
+	wifi_ssid_ = ssid;
+	wifi_hint_ = message;
+	
+	esp_timer_create_args_t clock_timer_args = {
+        .callback = [](void* arg) {
+            Application* app = (Application*)arg;
+            app->OnClockShowWifiTimer();
+        },
+        .arg = this,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "clock_show_wifi_timer",
+        .skip_unhandled_events = true
+    };
+    esp_timer_create(&clock_timer_args, &clock_show_wifi_timer_handle_);
+    esp_timer_start_periodic(clock_show_wifi_timer_handle_, 20 * 1000000);
+	
+	//由于开启定时器后首次出发需要等待1个周期时间，所以第一次播报直接调用接口
+	ShowWifi();
+}
 
+void Application::ShowWifi() {
     struct digit_sound {
         char digit;
         const std::string_view& sound;
@@ -240,9 +278,9 @@ void Application::ShowWifi(std::string ssid, const char* message) {
         digit_sound{'F', Lang::Sounds::P3_F},
     }};
 
-    Alert(Lang::Strings::WIFI_CONFIG_MODE,  message , "", Lang::Sounds::P3_WIFICONFIG);
+    Alert(Lang::Strings::WIFI_CONFIG_MODE, wifi_hint_.c_str() , "", Lang::Sounds::P3_WIFICONFIG);
 
-    for (const auto& digit : ssid) {
+    for (const auto& digit : wifi_ssid_) {
         auto it = std::find_if(digit_sounds.begin(), digit_sounds.end(),
             [digit](const digit_sound& ds) { return ds.digit == digit; });
         if (it != digit_sounds.end()) {
@@ -650,6 +688,24 @@ void Application::OnClockTimer() {
             }
         }
     }
+}
+
+void Application::OnClockShowWifiTimer() {
+	if(device_state_ == kDeviceStateWifiConfiguring){
+		ShowWifi();
+	}else{
+		ESP_LOGI(TAG, "Stop clock show wifi timer");
+		esp_timer_stop(clock_show_wifi_timer_handle_);
+	}
+}
+
+void Application::OnClockShowActiveCodeTimer() {
+	if(device_state_ == kDeviceStateActivating){
+		ShowActivationCode();
+	}else{
+		ESP_LOGI(TAG, "Stop clock show active code timer");
+		esp_timer_stop(clock_show_active_code_timer_handle_);
+	}
 }
 
 // Add a async task to MainLoop

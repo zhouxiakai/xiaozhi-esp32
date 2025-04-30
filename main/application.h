@@ -63,7 +63,7 @@ public:
     void Schedule(std::function<void()> callback);
     void SetDeviceState(DeviceState state);
     void Alert(const char* status, const char* message, const char* emotion = "", const std::string_view& sound = "");
-	void ShowWifi(std::string ssid, const char* message);
+	void StartShowWifi(std::string ssid, std::string message);
     void DismissAlert();
     void AbortSpeaking(AbortReason reason);
     void ToggleChatState();
@@ -117,6 +117,12 @@ private:
     OpusResampler input_resampler_;
     OpusResampler reference_resampler_;
     OpusResampler output_resampler_;
+	
+	esp_timer_handle_t clock_show_wifi_timer_handle_ = nullptr;
+	std::string wifi_ssid_;
+	std::string wifi_hint_;
+	
+	esp_timer_handle_t clock_show_active_code_timer_handle_ = nullptr;
 
     void MainEventLoop();
     void OnAudioInput();
@@ -125,8 +131,12 @@ private:
     void ResetDecoder();
     void SetDecodeSampleRate(int sample_rate, int frame_duration);
     void CheckNewVersion();
+	void StartShowActivationCode();
     void ShowActivationCode();
+	void ShowWifi();
     void OnClockTimer();
+	void OnClockShowWifiTimer();
+	void OnClockShowActiveCodeTimer();
     void SetListeningMode(ListeningMode mode);
     void AudioLoop();
 };
