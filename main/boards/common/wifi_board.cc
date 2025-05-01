@@ -182,3 +182,10 @@ void WifiBoard::ResetWifiConfiguration() {
     // Reboot the device
     esp_restart();
 }
+
+void WifiBoard::ResetNetConfig(){
+    auto& ssid_manager = SsidManager::GetInstance();
+    ssid_manager.Clear();
+    ResetWifiConfiguration();
+}
+

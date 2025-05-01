@@ -1042,3 +1042,9 @@ bool Application::CanEnterSleepMode() {
     // Now it is safe to enter sleep mode
     return true;
 }
+
+void Application::ResetConfig(){
+    ESP_LOGI(TAG, "Reset all config");
+    auto& board = Board::GetInstance();
+    board.ResetNetConfig();
+}

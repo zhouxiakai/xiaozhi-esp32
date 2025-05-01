@@ -47,6 +47,7 @@ private:
     Button boot_button_;
     Button onoff_button_;
     bool ready_shutdown;
+    int64_t boot_button_press_down_tick_;
     
     void InitializeI2c() {
         // Initialize I2C peripheral
@@ -85,6 +86,17 @@ private:
             app.ToggleChatState();
         });
 
+        boot_button_.OnPressDown([this](){
+            boot_button_press_down_tick_ = esp_timer_get_time();
+        });
+
+        boot_button_.OnPressUp([this](){
+            if(esp_timer_get_time() - boot_button_press_down_tick_ >= 5*1000000){
+                auto& app = Application::GetInstance();
+                app.ResetConfig();
+            }
+        });
+        
         onoff_button_.OnLongPress([this](){
             if(ready_shutdown){
                 //1.如果直接检查长按关机，在开机阶段会触发长按回调，导致直接关机
@@ -115,8 +127,6 @@ private:
     void InitializeIot() {
         auto& thing_manager = iot::ThingManager::GetInstance();
         thing_manager.AddThing(iot::CreateThing("Speaker"));
-        thing_manager.AddThing(iot::CreateThing("Screen"));
-        thing_manager.AddThing(iot::CreateThing("Chassis"));
     }
 
 public:

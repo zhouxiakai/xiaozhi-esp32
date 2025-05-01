@@ -20,6 +20,7 @@ public:
     virtual Udp* CreateUdp() override;
     virtual const char* GetNetworkStateIcon() override;
     virtual void SetPowerSaveMode(bool enabled) override;
+    virtual void ResetNetConfig() override;
     virtual void ResetWifiConfiguration();
 };
 
